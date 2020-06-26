@@ -38,7 +38,6 @@ int main() {
 
     vector <string> pond(H);
     VVVI dp(H, VVI(W, VI(4, -1)));
-    VVVI used(H, VVI(W, VI(4, 0)));
 
     VI x(2);
     VI y(2);
@@ -60,13 +59,13 @@ int main() {
         int qx = que.top().qx;
         int qy = que.top().qy;
         int qdir = que.top().dir;
+        int qdist = que.top().dist;
+
         que.pop();
 
-        if (used[qx][qy][qdir]) {
+        if (qdist > dp[qx][qy][qdir]) {
             continue;
         }
-
-        used[qx][qy][qdir] = 1;
 
         if (qx == x[1] && qy == y[1]) {
             break;
