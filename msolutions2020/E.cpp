@@ -12,7 +12,6 @@ using namespace std;
 
 using VLL = vector <long long>;
 using VPILL = vector < pair<long long, int> >;
-using VB = vector <bool>;
 int N;
 VLL X;
 VLL Y;
@@ -20,8 +19,8 @@ VLL P;
 VLL ans;
 VPILL PX;
 VPILL PY;
-VB xcho;
-VB ycho;
+int xcho;
+int ycho;
 
 const long long INF = 1000000000LL * 1000000000LL;
 
@@ -38,14 +37,14 @@ void solve(int now, int chosen) {
             minDist[i] = min(minDist[i], min(abs(X[i]), abs(Y[i])));
 
             // x axis
-            if (xcho[PX[i].second]) {
+            if (xcho & (1 << PX[i].second)) {
                 lastX = PX[i].first;
             }
 
             minDist[PX[i].second] = min(minDist[PX[i].second], PX[i].first-lastX);
 
             // y axis
-            if (ycho[PY[i].second]) {
+            if (ycho & (1 << PY[i].second)) {
                 lastY = PY[i].first;
             }
 
@@ -58,14 +57,14 @@ void solve(int now, int chosen) {
 
         for (int i = N-1; i >= 0; --i) {
             // x axis
-            if (xcho[PX[i].second]) {
+            if (xcho & (1 << PX[i].second)) {
                 lastX = PX[i].first;
             }
 
             minDist[PX[i].second] = min(minDist[PX[i].second], lastX-PX[i].first);
 
             // y axis
-            if (ycho[PY[i].second]) {
+            if (ycho & (1 << PY[i].second)) {
                 lastY = PY[i].first;
             }
 
@@ -82,13 +81,13 @@ void solve(int now, int chosen) {
 
     solve(now+1, chosen);
 
-    xcho[now] = true;
+    xcho |= (1<<now);
     solve(now+1, chosen+1);
-    xcho[now] = false;
+    xcho &= ~(1<<now);
 
-    ycho[now] = true;
+    ycho |= (1<<now);
     solve(now+1, chosen+1);
-    ycho[now] = false;
+    ycho &= ~(1<<now);
 }
 
 int main() {
@@ -108,8 +107,8 @@ int main() {
     }
 
     ans = VLL(N+1, INF);
-    xcho = VB(N);
-    ycho = VB(N);
+    xcho = 0;
+    ycho = 0;
 
     sort(PX.begin(), PX.end());
     sort(PY.begin(), PY.end());
