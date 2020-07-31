@@ -17,6 +17,7 @@ VLL X;
 VLL Y;
 VLL P;
 VLL ans;
+VLL defaultMinDist;
 VPILL PX;
 VPILL PY;
 int xcho;
@@ -26,16 +27,13 @@ const long long INF = 1000000000LL * 1000000000LL;
 
 void solve(int now, int chosen) {
     if (now == N) {
-        VLL minDist(N, INF);
+        VLL minDist(defaultMinDist);
 
         long long res = 0;
         long long lastX = -INF;
         long long lastY = -INF;
 
         for (int i = 0; i < N; ++i) {
-            // default
-            minDist[i] = min(minDist[i], min(abs(X[i]), abs(Y[i])));
-
             // x axis
             if (xcho & (1 << PX[i].second)) {
                 lastX = PX[i].first;
@@ -96,6 +94,7 @@ int main() {
     X = VLL(N);
     Y = VLL(N);
     P = VLL(N);
+    defaultMinDist = VLL(N, INF);
 
     PX = VPILL(N);
     PY = VPILL(N);
@@ -104,6 +103,7 @@ int main() {
         cin >> X[i] >> Y[i] >> P[i];
         PX[i] = make_pair(X[i], i);
         PY[i] = make_pair(Y[i], i);
+        defaultMinDist[i] = min(defaultMinDist[i], min(abs(X[i]), abs(Y[i])));
     }
 
     ans = VLL(N+1, INF);
