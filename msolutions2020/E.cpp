@@ -12,63 +12,24 @@ using namespace std;
 
 using VLL = vector <long long>;
 using VPILL = vector < pair<long long, int> >;
+using VB = vector <bool>;
+int N;
+VLL X;
+VLL Y;
+VLL P;
+VLL ans;
+VPILL PX;
+VPILL PY;
+VB xcho;
+VB ycho;
 
-int mypow(int n, int p) {
-    if (p == 0) {
-        return 1;
-    }
+const long long INF = 1000000000LL * 1000000000LL;
 
-    int half = mypow(n, p/2);
-    return half * half *  (1 + (p&1) * (n-1));
-}
-
-int main() {
-    int N;
-    cin >> N;
-
-    VLL X(N);
-    VLL Y(N);
-    VLL P(N);
-
-    VPILL PX(N);
-    VPILL PY(N);
-
-    for (int i = 0; i < N; ++i) {
-        cin >> X[i] >> Y[i] >> P[i];
-        PX[i] = make_pair(X[i], i);
-        PY[i] = make_pair(Y[i], i);
-    }
-
-    int superset = mypow(3, N);
-    const long long INF = 1000000000LL * 1000000000LL;
-    VLL ans(N+1, INF);
-
-    sort(PX.begin(), PX.end());
-    sort(PY.begin(), PY.end());
-
-    for (int sub = 0; sub < superset; ++sub) {
-        vector <bool> xcho(N);
-        vector <bool> ycho(N);
-
-        int val = sub;
-        int cho = 0;
-        long long res = 0;
-
-        for (int i = 0; i < N; ++i) {
-            if (val % 3 == 1) {
-                ++cho;
-                xcho[i] = true;
-            } else if (val % 3 == 2) {
-                ++cho;
-                ycho[i] = true;
-            }
-
-            val /= 3;
-        }
-
+void solve(int now, int chosen) {
+    if (now == N) {
         VLL minDist(N, INF);
 
-        // forward
+        long long res = 0;
         long long lastX = -INF;
         long long lastY = -INF;
 
@@ -115,8 +76,44 @@ int main() {
             res += P[i] * minDist[i];
         }
 
-        ans[cho] = min(ans[cho], res);
+        ans[chosen] = min(ans[chosen], res);
+        return ;
     }
+
+    solve(now+1, chosen);
+
+    xcho[now] = true;
+    solve(now+1, chosen+1);
+    xcho[now] = false;
+
+    ycho[now] = true;
+    solve(now+1, chosen+1);
+    ycho[now] = false;
+}
+
+int main() {
+    cin >> N;
+
+    X = VLL(N);
+    Y = VLL(N);
+    P = VLL(N);
+
+    PX = VPILL(N);
+    PY = VPILL(N);
+
+    for (int i = 0; i < N; ++i) {
+        cin >> X[i] >> Y[i] >> P[i];
+        PX[i] = make_pair(X[i], i);
+        PY[i] = make_pair(Y[i], i);
+    }
+
+    ans = VLL(N+1, INF);
+    xcho = VB(N);
+    ycho = VB(N);
+
+    sort(PX.begin(), PX.end());
+    sort(PY.begin(), PY.end());
+    solve(0, 0);
 
     for (int k = 0; k <= N; ++k) {
         cout << ans[k] << endl;
