@@ -63,6 +63,12 @@ int main() {
         sort(posVal.begin(), posVal.end(), greater<int>());
         sort(negVal.begin(), negVal.end());
 
+        if (K%2) {
+            res *= posVal[idx[0]++];
+            res %= MOD;
+            --K;
+        }
+
         while (K >= 2 && idx[1]+2 <= negVal.size()) {
             long long mul[2] = {0, negVal[idx[1]] * negVal[idx[1]+1]};
             int plus = 0;
