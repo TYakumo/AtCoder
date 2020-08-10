@@ -104,7 +104,6 @@ int main() {
             }
 
             sort(target.begin(), target.end(), sorterX());
-            // cout << "TARGET DEBUG " << dir << " " << target.size() << endl;
             for (int i = 1; i < target.size(); ++i) {
                 if (target[i-1].d == 3 && target[i].d == 2) { // collision
                     long long timeNeeded = (target[i].x - target[i-1].x) * 5LL;
