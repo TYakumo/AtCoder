@@ -12,7 +12,6 @@ using namespace std;
 
 int main() {
     int N;
-
     cin >> N;
 
     vector <long long> A(N);
@@ -45,19 +44,15 @@ int main() {
             // argMax(a) <= A[0] => argMin |A[0]-a|
             // 10^12 => (2^10)^4
             long long ans = AND;
-            // cout << "BASE " << ans << endl;
 
             for (long long bit = 42; bit >= 0; --bit) {
                 long long flag = (1LL << bit);
-                if (flag & xorSum) { // dispatch
-                    if (ans + flag <= A[0]) {
-                        ans += flag;
-                        // cout << "DEBUG ANS " << ans << endl;
-                    }
+                if ((flag & xorSum) && ans + flag <= A[0]) { // dispatch
+                    ans += flag;
                 }
             }
 
-            cout << (ans == 0 ? -1 : A[0]-ans) << endl;
+            cout << (ans == 0 || ans > A[0] ? -1 : A[0]-ans) << endl;
         }
     }
 
