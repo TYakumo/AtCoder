@@ -12,80 +12,123 @@ using namespace std;
 
 using VI = vector <int>;
 using VVI = vector <VI>;
-using VVVI = vector <VVI>;
+using VS = vector < set<int> >;
+
+inline int getNextIdx(VVI& vs, int val, int npos) {
+    auto iter = upper_bound(vs[val].begin(), vs[val].end(), npos);
+
+    if (iter == vs[val].end()) {
+        return -1;
+    }
+
+    return *iter;
+}
+
+inline int getBlockStart(VVI& vs, int val, int npos) {
+    int pos = getNextIdx(vs, val, npos);
+    int nextBlock = (npos+1-2)/3 * 3 + 2;
+    return pos < 0 ? nextBlock : (pos-2)/3*3 + 2;
+}
+
+int checkEqual(VI& A, int i, int j, int k){
+    return A[i] == A[k] && A[i] == A[j];
+}
+
+int checkValid(VI& A, int i, int j, int l1, int l2, int l3){
+    return (i > l1 || A[i] != A[l1])
+        && (i > l2 || A[i] != A[l2])
+        && (i > l3 || A[i] != A[l3])
+        && (j > l1 || A[j] != A[l1])
+        && (j > l2 || A[j] != A[l2])
+        && (j > l3 || A[j] != A[l3]);
+}
+
+void solve(VVI& dp, VI& A, int i, int j, int s) {
+    if (s <= j && s+3 > j) {
+        s += 3;
+    }
+
+    dp[A.size()][A.size()] = max(dp[A.size()][A.size()], dp[i][j]);
+
+    if (s+2 < A.size()) {
+        dp[i][s+0] = max(dp[i][s+0], dp[i][j] + checkEqual(A, j, s+1, s+2));
+        dp[i][s+1] = max(dp[i][s+1], dp[i][j] + checkEqual(A, j, s+0, s+2));
+        dp[i][s+2] = max(dp[i][s+2], dp[i][j] + checkEqual(A, j, s+0, s+1));
+
+        dp[j][s+0] = max(dp[j][s+0], dp[i][j] + checkEqual(A, i, s+1, s+2));
+        dp[j][s+1] = max(dp[j][s+1], dp[i][j] + checkEqual(A, i, s+0, s+2));
+        dp[j][s+2] = max(dp[j][s+2], dp[i][j] + checkEqual(A, i, s+0, s+1));
+
+        dp[s+0][s+1] = max(dp[s+0][s+1], dp[i][j] + checkEqual(A, i, j, s+2));
+        dp[s+0][s+2] = max(dp[s+0][s+2], dp[i][j] + checkEqual(A, i, j, s+1));
+        dp[s+1][s+2] = max(dp[s+1][s+2], dp[i][j] + checkEqual(A, i, j, s+0));
+    } else if (s < A.size()) {
+        dp[A.size()][A.size()] = max(dp[A.size()][A.size()], dp[i][j] + checkEqual(A, i, j, s));
+    }
+}
 
 int main() {
     int N;
     cin >> N;
 
-    // iteration, number, num
-    VI A(3*N);
+    VI A;
+    VVI vs(N+1);
+    int ans = 0;
 
-    for (int i = 0; i < 3*N; ++i) {
-        cin >> A[i];
-    }
+    for (int i = 0; i <= N; ++i) {
+        int upper = 2 + (i > 0) - 2*(i == N);
+        for (int j = 0; j < upper; ++j) {
+            int v;
+            cin >> v;
+            A.push_back(v);
+        }
 
-    VVVI dp(N+1, VVI(3, VI(N+1, -1)));
+        while (A.size() >= 3) {
+            int aSize = A.size();
+            // cout << "GO " << aSize << endl;
 
-    dp[0][0][0] = 0;
-
-    for (int it = 0; it < N; ++it) {
-        for (int n = 0; n < 3; ++n) {
-            for (int num = 0; num <= N; ++num) {
-                if (dp[it][n][num] == -1) {
-                    continue;
-                }
-
-                int plus = 0;
-                // starting from [it*3, it*3+5]
-                unordered_map <int, int> counter;
-                if (it == 0) {
-                    for (int r = 0; r < 5 && r < 3*N; ++r) {
-                        ++counter[A[r]];
-                    }
-                } else {
-                    if (num) {
-                        counter[num] += n;
-                    }
-
-                    int offset = it*3 + 2;
-                    for (int r = 0; r < 3 && r + offset < 3*N; ++r) {
-                        ++counter[A[offset + r]];
-                    }
-                }
-
-                auto iter = counter.begin();
-                while (iter != counter.end()) {
-                    if (iter->second >= 3) {
-                        iter->second -= 3;
-                        plus = 1;
-                        break;
-                    }
-                    ++iter;
-                }
-
-                // choose remain
-                iter = counter.begin();
-                while (iter != counter.end()) {
-                    dp[it+1][min(2, iter->second)][iter->first] = max(dp[it+1][min(2, iter->second)][iter->first], dp[it][n][num]+plus);
-                    ++iter;
-                }
-
-                // reserve no number
-                // dp[it+1][0][0] = max(dp[it+1][0][0], dp[it][n][num]+plus);
+            if (A[aSize-1] == A[aSize-2] && A[aSize-1] == A[aSize-3]) {
+                A.pop_back();
+                A.pop_back();
+                A.pop_back();
+                ++ans;
+            } else {
+                break;
             }
         }
     }
 
-    int ans = 0;
-
-    for (int n = 0; n < 3; ++n) {
-        for (int v = 0; v <= N; ++v) {
-            ans = max(ans, dp[N][n][v]);
-        }
+    // cout << "FINAL " << A.size() << " " << ans << endl;
+    for (int i = 0; i < A.size(); ++i) {
+        vs[A[i]].push_back(i);
     }
 
-    cout << ans << endl;
+    VVI dp(A.size()+1, VI(A.size()+1, -1));
+    VI nextPos(A.size());
+
+    dp[0][1] = 0;
+
+    for (int i= 0; i < A.size(); ++i) {
+       for (int j = i+1; j < A.size(); ++j) {
+            if (dp[i][j] == -1) {
+                continue;
+            }
+
+            solve(dp, A, i, j, (j+1-2)/3*3+2);
+
+            // match i
+            solve(dp, A, i, j, getBlockStart(vs, A[i], j));
+
+            // match j
+            solve(dp, A, i, j, getBlockStart(vs, A[j], j));
+       }
+    }
+
+    if (!A.empty()) {
+        cout << ans + dp[A.size()][A.size()] << endl;
+    } else {
+        cout << ans << endl;
+    }
 
     return 0;
 }
