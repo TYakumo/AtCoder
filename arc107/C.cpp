@@ -86,15 +86,11 @@ long long calcComb(VVI& arr, int K) {
 void transpose(VVI& arr) {
     int N = arr.size();
 
-    VVI tmp = arr;
-
     for (int i = 0; i < N; ++i) {
-        for (int j = 0; j < N; ++j) {
-            tmp[j][i] = arr[i][j];
+        for (int j = i+1; j < N; ++j) {
+            swap(arr[i][j], arr[j][i]);
         }
     }
-
-    arr = tmp;
 }
 
 int main() {
