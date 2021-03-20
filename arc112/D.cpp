@@ -17,7 +17,7 @@ using VVI = vector <VI>;
 using US = unordered_set<int>;
 using VUS = vector <US>;
 
-int solve(const VS& graph) {
+int solve(VS graph) {
     int R = graph.size();
     int C = graph[0].size();
     int ans = R-2;
@@ -26,10 +26,12 @@ int solve(const VS& graph) {
     US covered;
     US cand;
 
+    graph[0][C-1] = graph[R-1][C-1] = graph[0][0] = graph[R-1][0] = '#';
+
     for (int i = 0; i < R; ++i) {
         cand.insert(i);
         for (int j = 0; j < C; ++j) {
-            if (graph[i][j] == '#' || ((i==0 || i==R-1) && (j==0 || j == C-1))) {
+            if (graph[i][j] == '#') {
                 gp[j].insert(i);
             }
         }
