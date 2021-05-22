@@ -70,16 +70,18 @@ int main() {
         priority_queue<Queue> pq;
         dp[p[0]][p[1]] = 0;
         pq.push(Queue(p[0], p[1], 0));
+        // cerr << "DEBUG GO " << globalAvg << endl;
+        double assignValue = tot == 0 ? INIT_VALUE : globalAvg;
 
-        // for (int i = 0; i < MAXN; ++i) {
-        //     for (int j = 0; j < MAXN; ++j) {
-        //         for (int dir = 0; dir < 4; ++dir) {
-        //             if (cnt[i][j][dir] == 0) {
-        //                 localExpected[i][j][dir] = globalAvg;
-        //             }
-        //         }
-        //     }
-        // }
+        for (int i = 0; i < MAXN; ++i) {
+            for (int j = 0; j < MAXN; ++j) {
+                for (int dir = 0; dir < 4; ++dir) {
+                    if (cnt[i][j][dir] == 0) {
+                        localExpected[i][j][dir] = assignValue;
+                    }
+                }
+            }
+        }
 
         while (!pq.empty()) {
             Queue now = pq.top();
@@ -134,7 +136,7 @@ int main() {
         globalAvg *= tot;
         globalAvg += cost;
         tot += ans.size();
-        globalAvg /= ans.size();
+        globalAvg /= tot;
 
 
         for (int i = 0; i < ans.size(); ++i) {
