@@ -12,6 +12,7 @@
 #include <unordered_set>
 #include <sstream>
 #include <iomanip>
+#include <random>
 using namespace std;
 
 using VI = vector <int>;
@@ -28,6 +29,9 @@ using UMI = unordered_map<int, int>;
 using UMLL = unordered_map<long long, long long>;
 
 const int MAXN = 30;
+int globalCnt = 0;
+const int RND_MAXN = 200000;
+VI rndVal(RND_MAXN);
 
 struct Queue {
     int r;
@@ -40,12 +44,29 @@ struct Queue {
     }
 };
 
+inline double processFunc(double v, double avg) {
+    // double ratio = v/avg;
+
+    // double base = 70 * ratio;
+    // double offset = rndVal[globalCnt];
+    // globalCnt = (globalCnt+1)%RND_MAXN;
+    // return base + ratio*offset;
+    return v;
+}
+
 int main() {
     const int dr[] = {1, -1, 0, 0};
     const int dc[] = {0, 0, 1, -1};
     const char dch[] = {'D', 'U', 'R', 'L'};
     // const int oppDir[] = {1, 0, 3, 2};
     unordered_map <char, int> chToIdx;
+
+    random_device seed_gen;
+    mt19937 engine(seed_gen());
+
+    for (int i = 0; i < RND_MAXN; ++i) {
+        rndVal[i] = engine()%10;
+    }
 
     for (int i = 0; i < 4; ++i) {
         chToIdx[dch[i]] = i;
@@ -57,8 +78,6 @@ int main() {
     const int TIMES = 1000;
     VVVD expected(MAXN, VVD(MAXN, VD(4, INIT_VALUE)));
     VVVI cnt(MAXN, VVI(MAXN, VI(4)));
-    double globalAvg = 1e-6;
-    int tot = 0;
 
     for (int t = 0; t < TIMES; ++t) {
         cin >> p[0] >> p[1] >> p[2] >> p[3];
@@ -70,18 +89,6 @@ int main() {
         priority_queue<Queue> pq;
         dp[p[0]][p[1]] = 0;
         pq.push(Queue(p[0], p[1], 0));
-        // cerr << "DEBUG GO " << globalAvg << endl;
-        double assignValue = tot == 0 ? INIT_VALUE : globalAvg;
-
-        for (int i = 0; i < MAXN; ++i) {
-            for (int j = 0; j < MAXN; ++j) {
-                for (int dir = 0; dir < 4; ++dir) {
-                    if (cnt[i][j][dir] == 0) {
-                        localExpected[i][j][dir] = assignValue;
-                    }
-                }
-            }
-        }
 
         while (!pq.empty()) {
             Queue now = pq.top();
@@ -96,7 +103,7 @@ int main() {
             for (int dir = 0; dir < 4; ++dir) {
                 int newr = nr + dr[dir];
                 int newc = nc + dc[dir];
-                double cost = dp[nr][nc] + localExpected[nr][nc][dir];
+                double cost = dp[nr][nc] + expected[nr][nc][dir];
 
                 if (newr >= 0 && newr < MAXN
                 && newc >= 0 && newc < MAXN
@@ -131,22 +138,17 @@ int main() {
         // update
         nr = p[0];
         nc = p[1];
-        double avg = cost / ans.size();
-
-        globalAvg *= tot;
-        globalAvg += cost;
-        tot += ans.size();
-        globalAvg /= tot;
-
+        double avg = cost / dp[p[2]][p[3]];
 
         for (int i = 0; i < ans.size(); ++i) {
             int dir = chToIdx[ans[i]];
+            double plus = avg * expected[nr][nc][dir];
             ++cnt[nr][nc][dir];
             if (cnt[nr][nc][dir] == 1) {
-                expected[nr][nc][dir] = avg;
+                expected[nr][nc][dir] = plus;
             } else {
                 expected[nr][nc][dir] *= (cnt[nr][nc][dir]-1);
-                expected[nr][nc][dir] += avg;
+                expected[nr][nc][dir] += plus;
                 expected[nr][nc][dir] /= (cnt[nr][nc][dir]);
             }
 
