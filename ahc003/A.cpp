@@ -52,11 +52,13 @@ int main() {
     }
 
     VI p(4);
-    const double INIT_VALUE = 1e-6;
+    const double INIT_VALUE = 5000;
     const double INF = 1e+18;
     const int TIMES = 1000;
     VVVD expected(MAXN, VVD(MAXN, VD(4, INIT_VALUE)));
     VVVI cnt(MAXN, VVI(MAXN, VI(4)));
+    double globalAvg = 1e-6;
+    int tot = 0;
 
     for (int t = 0; t < TIMES; ++t) {
         cin >> p[0] >> p[1] >> p[2] >> p[3];
@@ -64,9 +66,20 @@ int main() {
         VVD dp(MAXN, VD(MAXN, INF));
         VVI pre(MAXN, VI(MAXN, -1));
         VVI used(MAXN, VI(MAXN));
+        VVVD localExpected = expected;
         priority_queue<Queue> pq;
         dp[p[0]][p[1]] = 0;
         pq.push(Queue(p[0], p[1], 0));
+
+        // for (int i = 0; i < MAXN; ++i) {
+        //     for (int j = 0; j < MAXN; ++j) {
+        //         for (int dir = 0; dir < 4; ++dir) {
+        //             if (cnt[i][j][dir] == 0) {
+        //                 localExpected[i][j][dir] = globalAvg;
+        //             }
+        //         }
+        //     }
+        // }
 
         while (!pq.empty()) {
             Queue now = pq.top();
@@ -81,7 +94,7 @@ int main() {
             for (int dir = 0; dir < 4; ++dir) {
                 int newr = nr + dr[dir];
                 int newc = nc + dc[dir];
-                double cost = dp[nr][nc] + expected[nr][nc][dir];
+                double cost = dp[nr][nc] + localExpected[nr][nc][dir];
 
                 if (newr >= 0 && newr < MAXN
                 && newc >= 0 && newc < MAXN
@@ -118,10 +131,22 @@ int main() {
         nc = p[1];
         double avg = cost / ans.size();
 
+        globalAvg *= tot;
+        globalAvg += cost;
+        tot += ans.size();
+        globalAvg /= ans.size();
+
+
         for (int i = 0; i < ans.size(); ++i) {
             int dir = chToIdx[ans[i]];
-            expected[nr][nc][dir] += avg;
             ++cnt[nr][nc][dir];
+            if (cnt[nr][nc][dir] == 1) {
+                expected[nr][nc][dir] = avg;
+            } else {
+                expected[nr][nc][dir] *= (cnt[nr][nc][dir]-1);
+                expected[nr][nc][dir] += avg;
+                expected[nr][nc][dir] /= (cnt[nr][nc][dir]);
+            }
 
             nr += dr[dir];
             nc += dc[dir];
