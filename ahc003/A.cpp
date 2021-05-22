@@ -149,9 +149,11 @@ int main() {
             if (cnt[nr][nc][dir] == 1) {
                 expected[nr][nc][dir] = plus;
             } else {
-                expected[nr][nc][dir] *= (cnt[nr][nc][dir]-1);
-                expected[nr][nc][dir] += plus;
-                expected[nr][nc][dir] /= (cnt[nr][nc][dir]);
+                // expected[nr][nc][dir] *= (cnt[nr][nc][dir]-1);
+                // expected[nr][nc][dir] += plus;
+                // expected[nr][nc][dir] /= (cnt[nr][nc][dir]);
+                const double R = 0.45;
+                expected[nr][nc][dir] = expected[nr][nc][dir]*R + plus*(1.0-R);
             }
 
             int nextr = nr+dr[dir];
