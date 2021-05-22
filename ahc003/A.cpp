@@ -134,6 +134,7 @@ int main() {
 
         double cost;
         cin >> cost;
+        cost *= 1.1;
 
         // update
         nr = p[0];
@@ -146,15 +147,12 @@ int main() {
 
             double plus = avg * expected[nr][nc][dir];
             ++cnt[nr][nc][dir];
-            if (cnt[nr][nc][dir] == 1) {
-                expected[nr][nc][dir] = plus;
-            } else {
-                // expected[nr][nc][dir] *= (cnt[nr][nc][dir]-1);
-                // expected[nr][nc][dir] += plus;
-                // expected[nr][nc][dir] /= (cnt[nr][nc][dir]);
+            // if (cnt[nr][nc][dir] == 1) {
+            //     expected[nr][nc][dir] = plus;
+            // } else {
                 const double R = 0.45;
                 expected[nr][nc][dir] = expected[nr][nc][dir]*R + plus*(1.0-R);
-            }
+            // }
 
             int nextr = nr+dr[dir];
             int nextc = nc+dc[dir];
