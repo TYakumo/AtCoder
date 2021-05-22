@@ -58,7 +58,7 @@ int main() {
     const int dr[] = {1, -1, 0, 0};
     const int dc[] = {0, 0, 1, -1};
     const char dch[] = {'D', 'U', 'R', 'L'};
-    // const int oppDir[] = {1, 0, 3, 2};
+    const int oppDir[] = {1, 0, 3, 2};
     unordered_map <char, int> chToIdx;
 
     random_device seed_gen;
@@ -142,6 +142,8 @@ int main() {
 
         for (int i = 0; i < ans.size(); ++i) {
             int dir = chToIdx[ans[i]];
+            int opDir = oppDir[dir];
+
             double plus = avg * expected[nr][nc][dir];
             ++cnt[nr][nc][dir];
             if (cnt[nr][nc][dir] == 1) {
@@ -152,8 +154,17 @@ int main() {
                 expected[nr][nc][dir] /= (cnt[nr][nc][dir]);
             }
 
-            nr += dr[dir];
-            nc += dc[dir];
+            int nextr = nr+dr[dir];
+            int nextc = nc+dc[dir];
+
+            if (nextr >= 0 && nextr < MAXN
+            && nextc >= 0 && nextc < MAXN) {
+                expected[nextr][nextc][opDir] = expected[nr][nc][dir];
+                cnt[nextr][nextc][opDir] = cnt[nr][nc][dir];
+            }
+
+            nr = nextr;
+            nc = nextc;
         }
     }
 
