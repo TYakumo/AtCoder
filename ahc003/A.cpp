@@ -134,7 +134,7 @@ int main() {
 
         double cost;
         cin >> cost;
-        cost *= 1.1;
+        cost *= 1.2;
 
         // update
         nr = p[0];
