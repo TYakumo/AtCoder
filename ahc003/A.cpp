@@ -168,6 +168,11 @@ int main() {
 
                 double avg = cost[ct] / distSum;
 
+                // if (ct > 50) {
+                    double costScaling = max(0.9, min(1.1, sqrt(avg)));
+                    avg /= costScaling;
+                // }
+
                 nr = p[ct][0];
                 nc = p[ct][1];
 
@@ -210,6 +215,11 @@ int main() {
         }
 
         double avg = cost[t] / distSum;
+        // if (t > 50) {
+            double costScaling = max(0.9, min(1.1, sqrt(avg)));
+            avg /= costScaling;
+        // }
+
         double CR = 1+(avg-1.0)*(avg-1.0);
         // cerr << "CR " << CR << endl;
         // cerr << "avg ratio " << avg << endl;
