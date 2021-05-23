@@ -29,7 +29,6 @@ using UMI = unordered_map<int, int>;
 using UMLL = unordered_map<long long, long long>;
 
 const int MAXN = 30;
-int globalCnt = 0;
 const int RND_MAXN = 200000;
 VI rndVal(RND_MAXN);
 
@@ -44,16 +43,6 @@ struct Queue {
     }
 };
 
-inline double processFunc(double v, double avg) {
-    // double ratio = v/avg;
-
-    // double base = 70 * ratio;
-    // double offset = rndVal[globalCnt];
-    // globalCnt = (globalCnt+1)%RND_MAXN;
-    // return base + ratio*offset;
-    return v;
-}
-
 int main() {
     const int dr[] = {1, -1, 0, 0};
     const int dc[] = {0, 0, 1, -1};
@@ -61,23 +50,27 @@ int main() {
     const int oppDir[] = {1, 0, 3, 2};
     unordered_map <char, int> chToIdx;
 
-    random_device seed_gen;
-    mt19937 engine(seed_gen());
-
-    for (int i = 0; i < RND_MAXN; ++i) {
-        rndVal[i] = engine()%10;
-    }
-
     for (int i = 0; i < 4; ++i) {
         chToIdx[dch[i]] = i;
     }
 
     VI p(4);
+    const double FACTOR = 1.2;
+    // const double INIT_VALUE = 5000/FACTOR;
     const double INIT_VALUE = 5000;
     const double INF = 1e+18;
     const int TIMES = 1000;
+    const double R = 0.45;
     VVVD expected(MAXN, VVD(MAXN, VD(4, INIT_VALUE)));
     VVVI cnt(MAXN, VVI(MAXN, VI(4)));
+    double costAvg = INIT_VALUE;
+
+    random_device seed_gen;
+    mt19937 engine(seed_gen());
+
+    for (int i = 0; i < RND_MAXN; ++i) {
+        rndVal[i] = engine()%300;
+    }
 
     for (int t = 0; t < TIMES; ++t) {
         cin >> p[0] >> p[1] >> p[2] >> p[3];
@@ -89,6 +82,19 @@ int main() {
         priority_queue<Queue> pq;
         dp[p[0]][p[1]] = 0;
         pq.push(Queue(p[0], p[1], 0));
+
+        int tmp = engine()%rndVal.size();
+
+        for (int i = 0; i < MAXN; ++i) {
+            for (int j = 0; j < MAXN; ++j) {
+                for (int dir = 0; dir < 4; ++dir) {
+                    if (cnt[i][j][dir] == 0) {
+                        localExpected[i][j][dir] += rndVal[tmp];
+                    }
+                    tmp = (tmp+1) % rndVal.size();
+                }
+            }
+        }
 
         while (!pq.empty()) {
             Queue now = pq.top();
@@ -104,6 +110,7 @@ int main() {
                 int newr = nr + dr[dir];
                 int newc = nc + dc[dir];
                 double cost = dp[nr][nc] + expected[nr][nc][dir];
+                // double cost = dp[nr][nc] + localExpected[nr][nc][dir];
 
                 if (newr >= 0 && newr < MAXN
                 && newc >= 0 && newc < MAXN
@@ -134,24 +141,53 @@ int main() {
 
         double cost;
         cin >> cost;
-        cost *= 1.2;
+        costAvg = costAvg*R + cost*(1.0-R);
+        // if (cost/costAvg < 0.7) {
+        //     cost /= 0.9;
+        // }
+        // if (cost/costAvg > 1.3) {
+        //     cost /= 1.1;
+        // }
+        cost *= FACTOR;
 
         // update
         nr = p[0];
         nc = p[1];
-        double avg = cost / dp[p[2]][p[3]];
+        double distSum = 0;
+
+        for (int i = 0; i < ans.size(); ++i) {
+            int dir = chToIdx[ans[i]];
+
+            double scalingFactor = cnt[nr][nc][dir] == 0 ? INIT_VALUE : expected[nr][nc][dir];
+            distSum += scalingFactor;
+
+            nr += dr[dir];
+            nc += dc[dir];
+        }
+
+        double avg = cost / distSum;
+        double CR = 1+(avg-1.0)*(avg-1.0);
+        // cerr << "CR " << CR << endl;
+        nr = p[0];
+        nc = p[1];
+        int maxCnt = 0;
 
         for (int i = 0; i < ans.size(); ++i) {
             int dir = chToIdx[ans[i]];
             int opDir = oppDir[dir];
 
-            double plus = avg * expected[nr][nc][dir];
+            double scalingFactor = cnt[nr][nc][dir] == 0 ? INIT_VALUE : expected[nr][nc][dir];
+            double plus = avg * scalingFactor;
+            double tmpR = min(0.7, R+0.003*cnt[nr][nc][dir]);
+            maxCnt = max(maxCnt, cnt[nr][nc][dir]);
             ++cnt[nr][nc][dir];
             // if (cnt[nr][nc][dir] == 1) {
             //     expected[nr][nc][dir] = plus;
             // } else {
-                const double R = 0.45;
-                expected[nr][nc][dir] = expected[nr][nc][dir]*R + plus*(1.0-R);
+            // if (t > 5) {
+            //     tmpR /= CR;
+            // }
+                expected[nr][nc][dir] = expected[nr][nc][dir]*tmpR + plus*(1.0-tmpR);
             // }
 
             int nextr = nr+dr[dir];
@@ -166,6 +202,7 @@ int main() {
             nr = nextr;
             nc = nextc;
         }
+        // cerr << "MAXCNT " << maxCnt << endl;
     }
 
     return 0;
