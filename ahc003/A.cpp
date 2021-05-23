@@ -28,6 +28,8 @@ using VVLL = vector <VLL>;
 using UMI = unordered_map<int, int>;
 using UMLL = unordered_map<long long, long long>;
 
+using VS = vector <string>;
+
 const int MAXN = 30;
 const int RND_MAXN = 200000;
 VI rndVal(RND_MAXN);
@@ -54,16 +56,18 @@ int main() {
         chToIdx[dch[i]] = i;
     }
 
-    VI p(4);
     const double FACTOR = 1.2;
     // const double INIT_VALUE = 5000/FACTOR;
     const double INIT_VALUE = 5000;
     const double INF = 1e+18;
     const int TIMES = 1000;
-    const double R = 0.45;
+    const double R = 0.4;
     VVVD expected(MAXN, VVD(MAXN, VD(4, INIT_VALUE)));
     VVVI cnt(MAXN, VVI(MAXN, VI(4)));
     double costAvg = INIT_VALUE;
+    VVI p(TIMES, VI(4));
+    VS ans(TIMES);
+    VD cost(TIMES);
 
     random_device seed_gen;
     mt19937 engine(seed_gen());
@@ -72,16 +76,18 @@ int main() {
         rndVal[i] = engine()%300;
     }
 
+    double emptyAvg = 0;
+    int emptyCnt = 0;
+
     for (int t = 0; t < TIMES; ++t) {
-        cin >> p[0] >> p[1] >> p[2] >> p[3];
-        string ans;
+        cin >> p[t][0] >> p[t][1] >> p[t][2] >> p[t][3];
         VVD dp(MAXN, VD(MAXN, INF));
         VVI pre(MAXN, VI(MAXN, -1));
         VVI used(MAXN, VI(MAXN));
         VVVD localExpected = expected;
         priority_queue<Queue> pq;
-        dp[p[0]][p[1]] = 0;
-        pq.push(Queue(p[0], p[1], 0));
+        dp[p[t][0]][p[t][1]] = 0;
+        pq.push(Queue(p[t][0], p[t][1], 0));
 
         int tmp = engine()%rndVal.size();
 
@@ -124,39 +130,77 @@ int main() {
 
         // cerr << "START TRACING" << endl;
         // tracing
-        int nr = p[2];
-        int nc = p[3];
+        int nr = p[t][2];
+        int nc = p[t][3];
 
-        while (nr != p[0] || nc != p[1]) {
+        while (nr != p[t][0] || nc != p[t][1]) {
             int dir = pre[nr][nc];
             // cerr << "NOW " << nr << " " << nc << " " << dir << endl;
-            ans += dch[dir];
+            ans[t] += dch[dir];
             nr -= dr[dir];
             nc -= dc[dir];
         }
 
         // cerr << "END TRACING" << endl;
-        reverse(ans.begin(), ans.end());
-        cout << ans << endl;
+        reverse(ans[t].begin(), ans[t].end());
+        cout << ans[t] << endl;
 
-        double cost;
-        cin >> cost;
-        costAvg = costAvg*R + cost*(1.0-R);
-        // if (cost/costAvg < 0.7) {
-        //     cost /= 0.9;
-        // }
-        // if (cost/costAvg > 1.3) {
-        //     cost /= 1.1;
-        // }
-        cost *= FACTOR;
+        cin >> cost[t];
+        costAvg = costAvg*R + cost[t]*(1.0-R);
+        cost[t] *= FACTOR;
 
         // update
-        nr = p[0];
-        nc = p[1];
+        if (t && t%50 == 0) {
+            for (int ct = 0; ct < t; ++ct) {
+                nr = p[ct][0];
+                nc = p[ct][1];
+                double distSum = 0;
+
+                for (int i = 0; i < ans[ct].size(); ++i) {
+                    int dir = chToIdx[ans[ct][i]];
+
+                    double scalingFactor = cnt[nr][nc][dir] == 0 ? INIT_VALUE : expected[nr][nc][dir];
+                    distSum += scalingFactor;
+
+                    nr += dr[dir];
+                    nc += dc[dir];
+                }
+
+                double avg = cost[ct] / distSum;
+
+                nr = p[ct][0];
+                nc = p[ct][1];
+
+
+                for (int i = 0; i < ans[ct].size(); ++i) {
+                    int dir = chToIdx[ans[ct][i]];
+                    int opDir = oppDir[dir];
+
+                    double scalingFactor = cnt[nr][nc][dir] == 0 ? INIT_VALUE : expected[nr][nc][dir];
+                    double plus = avg * scalingFactor;
+                    expected[nr][nc][dir] = expected[nr][nc][dir]*R + plus*(1.0-R);
+
+                    int nextr = nr+dr[dir];
+                    int nextc = nc+dc[dir];
+
+                    if (nextr >= 0 && nextr < MAXN
+                    && nextc >= 0 && nextc < MAXN) {
+                        expected[nextr][nextc][opDir] = expected[nr][nc][dir];
+                        cnt[nextr][nextc][opDir] = cnt[nr][nc][dir];
+                    }
+
+                    nr = nextr;
+                    nc = nextc;
+                }
+            }
+        }
+
+        nr = p[t][0];
+        nc = p[t][1];
         double distSum = 0;
 
-        for (int i = 0; i < ans.size(); ++i) {
-            int dir = chToIdx[ans[i]];
+        for (int i = 0; i < ans[t].size(); ++i) {
+            int dir = chToIdx[ans[t][i]];
 
             double scalingFactor = cnt[nr][nc][dir] == 0 ? INIT_VALUE : expected[nr][nc][dir];
             distSum += scalingFactor;
@@ -165,30 +209,31 @@ int main() {
             nc += dc[dir];
         }
 
-        double avg = cost / distSum;
+        double avg = cost[t] / distSum;
         double CR = 1+(avg-1.0)*(avg-1.0);
         // cerr << "CR " << CR << endl;
-        nr = p[0];
-        nc = p[1];
+        // cerr << "avg ratio " << avg << endl;
+        nr = p[t][0];
+        nc = p[t][1];
         int maxCnt = 0;
 
-        for (int i = 0; i < ans.size(); ++i) {
-            int dir = chToIdx[ans[i]];
+        for (int i = 0; i < ans[t].size(); ++i) {
+            int dir = chToIdx[ans[t][i]];
             int opDir = oppDir[dir];
 
             double scalingFactor = cnt[nr][nc][dir] == 0 ? INIT_VALUE : expected[nr][nc][dir];
             double plus = avg * scalingFactor;
-            double tmpR = min(0.7, R+0.003*cnt[nr][nc][dir]);
             maxCnt = max(maxCnt, cnt[nr][nc][dir]);
+
+            if (cnt[nr][nc][dir] == 0) {
+                emptyAvg *= emptyCnt;
+                emptyAvg += plus;
+                ++emptyCnt;
+                emptyAvg /= emptyCnt;
+            }
+
             ++cnt[nr][nc][dir];
-            // if (cnt[nr][nc][dir] == 1) {
-            //     expected[nr][nc][dir] = plus;
-            // } else {
-            // if (t > 5) {
-            //     tmpR /= CR;
-            // }
-                expected[nr][nc][dir] = expected[nr][nc][dir]*tmpR + plus*(1.0-tmpR);
-            // }
+            expected[nr][nc][dir] = expected[nr][nc][dir]*R + plus*(1.0-R);
 
             int nextr = nr+dr[dir];
             int nextc = nc+dc[dir];
@@ -204,6 +249,8 @@ int main() {
         }
         // cerr << "MAXCNT " << maxCnt << endl;
     }
+
+    // cerr << "DEBUG " << emptyAvg << endl;
 
     return 0;
 }
