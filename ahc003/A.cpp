@@ -45,6 +45,25 @@ struct Queue {
     }
 };
 
+inline double sigmoid (double v) {
+    return 1.0 / (1.0 + exp(-v));
+}
+
+inline double probConvert(double p) {
+    // return p;
+    return sqrt(p);
+    // double diff = p-1;
+    // double prob = sigmoid(diff*2);
+
+    // if (prob > 0.8) {
+    //     return sqrt(p);
+    // } else if (prob < 0.2) {
+    //     return sqrt(p);
+    // }
+
+    // return 1.0;
+}
+
 int main() {
     const int dr[] = {1, -1, 0, 0};
     const int dc[] = {0, 0, 1, -1};
@@ -78,6 +97,8 @@ int main() {
 
     double emptyAvg = 0;
     int emptyCnt = 0;
+    const double SCALING_LOWER = 0.85;
+    const double SCALING_UPPER = 1.15;
 
     for (int t = 0; t < TIMES; ++t) {
         cin >> p[t][0] >> p[t][1] >> p[t][2] >> p[t][3];
@@ -150,7 +171,9 @@ int main() {
         cost[t] *= FACTOR;
 
         // update
-        if (t && t%50 == 0) {
+        if (t && t%15 == 0) {
+            VVVD newExpected = expected;
+
             for (int ct = 0; ct < t; ++ct) {
                 nr = p[ct][0];
                 nc = p[ct][1];
@@ -161,21 +184,14 @@ int main() {
 
                     double scalingFactor = cnt[nr][nc][dir] == 0 ? INIT_VALUE : expected[nr][nc][dir];
                     distSum += scalingFactor;
-
                     nr += dr[dir];
                     nc += dc[dir];
                 }
 
                 double avg = cost[ct] / distSum;
 
-                // if (ct > 50) {
-                    double costScaling = max(0.9, min(1.1, sqrt(avg)));
-                    avg /= costScaling;
-                // }
-
                 nr = p[ct][0];
                 nc = p[ct][1];
-
 
                 for (int i = 0; i < ans[ct].size(); ++i) {
                     int dir = chToIdx[ans[ct][i]];
@@ -183,31 +199,46 @@ int main() {
 
                     double scalingFactor = cnt[nr][nc][dir] == 0 ? INIT_VALUE : expected[nr][nc][dir];
                     double plus = avg * scalingFactor;
-                    expected[nr][nc][dir] = expected[nr][nc][dir]*R + plus*(1.0-R);
+                    newExpected[nr][nc][dir] += plus;
 
                     int nextr = nr+dr[dir];
                     int nextc = nc+dc[dir];
 
                     if (nextr >= 0 && nextr < MAXN
                     && nextc >= 0 && nextc < MAXN) {
-                        expected[nextr][nextc][opDir] = expected[nr][nc][dir];
-                        cnt[nextr][nextc][opDir] = cnt[nr][nc][dir];
+                        newExpected[nextr][nextc][opDir] = newExpected[nr][nc][dir];
                     }
 
                     nr = nextr;
                     nc = nextc;
                 }
             }
+
+            for (int i = 0; i < MAXN; ++i) {
+                for (int j = 0; j < MAXN; ++j) {
+                    for (int dir = 0; dir < 4; ++dir) {
+                        newExpected[i][j][dir] /= (cnt[i][j][dir]+1);
+                    }
+                }
+            }
+
+            expected = newExpected;
         }
 
         nr = p[t][0];
         nc = p[t][1];
         double distSum = 0;
+        double okRatio = 0;
+        int okCount = 0;
 
         for (int i = 0; i < ans[t].size(); ++i) {
             int dir = chToIdx[ans[t][i]];
 
             double scalingFactor = cnt[nr][nc][dir] == 0 ? INIT_VALUE : expected[nr][nc][dir];
+            if (cnt[nr][nc][dir] != 0) {
+                okRatio += 1.0 / ans[t].size();
+                ++okCount;
+            }
             distSum += scalingFactor;
 
             nr += dr[dir];
@@ -215,10 +246,12 @@ int main() {
         }
 
         double avg = cost[t] / distSum;
-        // if (t > 50) {
-            double costScaling = max(0.9, min(1.1, sqrt(avg)));
+        double costScaling = 1.0;
+        if (okRatio >= 0.3) {
+            costScaling = max(SCALING_LOWER, min(SCALING_UPPER, probConvert(avg)));
             avg /= costScaling;
-        // }
+        }
+        // cerr << "SCALING " <<  max(SCALING_LOWER, min(SCALING_UPPER, sqrt(avg))) << " " << avg << endl;
 
         double CR = 1+(avg-1.0)*(avg-1.0);
         // cerr << "CR " << CR << endl;
@@ -243,10 +276,19 @@ int main() {
             }
 
             ++cnt[nr][nc][dir];
-            expected[nr][nc][dir] = expected[nr][nc][dir]*R + plus*(1.0-R);
+            if (cnt[nr][nc][dir] >= 50) {
+                plus *= costScaling; // revert
+                expected[nr][nc][dir] *= (cnt[nr][nc][dir]-1);
+                expected[nr][nc][dir] += plus;
+                expected[nr][nc][dir] /= cnt[nr][nc][dir];
+            } else {
+                expected[nr][nc][dir] = expected[nr][nc][dir]*R + plus*(1.0-R);
+            }
+
 
             int nextr = nr+dr[dir];
             int nextc = nc+dc[dir];
+            expected[nr][nc][dir] = max(2000.0, min(8000.0, expected[nr][nc][dir]));
 
             if (nextr >= 0 && nextr < MAXN
             && nextc >= 0 && nextc < MAXN) {
