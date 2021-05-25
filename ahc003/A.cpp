@@ -41,7 +41,15 @@ struct Queue {
 
     Queue (int pr, int pc, double dcost) : r(pr), c(pc), cost(dcost) {}
     bool operator<(const Queue& q) const {
-        return cost > q.cost;
+        if (cost != q.cost) {
+            return cost > q.cost;
+        }
+
+        if (r != q.r) {
+            return r < q.r;
+        }
+
+        return c < q.c;
     }
 };
 
@@ -99,6 +107,7 @@ int main() {
     int emptyCnt = 0;
     const double SCALING_LOWER = 0.85;
     const double SCALING_UPPER = 1.15;
+    const int THRESHOLD = 50;
 
     for (int t = 0; t < TIMES; ++t) {
         cin >> p[t][0] >> p[t][1] >> p[t][2] >> p[t][3];
@@ -132,6 +141,12 @@ int main() {
             if (used[nr][nc]) {
                 continue;
             }
+
+            if (nr == p[t][2] && nc == p[t][3]) {
+                break;
+            }
+
+            used[nr][nc] = 1;
 
             for (int dir = 0; dir < 4; ++dir) {
                 int newr = nr + dr[dir];
@@ -171,7 +186,7 @@ int main() {
         cost[t] *= FACTOR;
 
         // update
-        if (t && t%15 == 0) {
+        if (t > 20 && t%10 == 0) {
             VVVD newExpected = expected;
 
             for (int ct = 0; ct < t; ++ct) {
@@ -248,7 +263,7 @@ int main() {
         double avg = cost[t] / distSum;
         double costScaling = 1.0;
         if (okRatio >= 0.3) {
-            costScaling = max(SCALING_LOWER, min(SCALING_UPPER, probConvert(avg)));
+            // costScaling = max(SCALING_LOWER, min(SCALING_UPPER, probConvert(avg)));
             avg /= costScaling;
         }
         // cerr << "SCALING " <<  max(SCALING_LOWER, min(SCALING_UPPER, sqrt(avg))) << " " << avg << endl;
@@ -276,7 +291,7 @@ int main() {
             }
 
             ++cnt[nr][nc][dir];
-            if (cnt[nr][nc][dir] >= 50) {
+            if (cnt[nr][nc][dir] >= THRESHOLD) {
                 plus *= costScaling; // revert
                 expected[nr][nc][dir] *= (cnt[nr][nc][dir]-1);
                 expected[nr][nc][dir] += plus;
