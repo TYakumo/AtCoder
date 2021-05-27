@@ -89,6 +89,8 @@ int main() {
     const double INF = 1e+18;
     const int TIMES = 1000;
     const double R = 0.4;
+    const double LOWER_WEIGHT = 2000.0;
+    const double UPPER_WEIGHT = 8000.0;
     VVVD expected(MAXN, VVD(MAXN, VD(4, INIT_VALUE)));
     VVVI cnt(MAXN, VVI(MAXN, VI(4)));
     double costAvg = INIT_VALUE;
@@ -233,6 +235,7 @@ int main() {
                 for (int j = 0; j < MAXN; ++j) {
                     for (int dir = 0; dir < 4; ++dir) {
                         newExpected[i][j][dir] /= (cnt[i][j][dir]+1);
+                        newExpected[i][j][dir] = max(LOWER_WEIGHT, min(UPPER_WEIGHT, newExpected[i][j][dir]));
                     }
                 }
             }
@@ -303,7 +306,7 @@ int main() {
 
             int nextr = nr+dr[dir];
             int nextc = nc+dc[dir];
-            expected[nr][nc][dir] = max(2000.0, min(8000.0, expected[nr][nc][dir]));
+            expected[nr][nc][dir] = max(LOWER_WEIGHT, min(UPPER_WEIGHT, expected[nr][nc][dir]));
 
             if (nextr >= 0 && nextr < MAXN
             && nextc >= 0 && nextc < MAXN) {
