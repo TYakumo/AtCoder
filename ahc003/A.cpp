@@ -89,8 +89,8 @@ int main() {
     const double INF = 1e+18;
     const int TIMES = 1000;
     const double R = 0.4;
-    const double LOWER_WEIGHT = 2000.0;
-    const double UPPER_WEIGHT = 8000.0;
+    const double LOWER_WEIGHT = 500.0;
+    const double UPPER_WEIGHT = 12000.0;
     VVVD expected(MAXN, VVD(MAXN, VD(4, INIT_VALUE)));
     VVVI cnt(MAXN, VVI(MAXN, VI(4)));
     double costAvg = INIT_VALUE;
@@ -106,7 +106,9 @@ int main() {
     }
 
     double emptyAvg = 0;
+    double edgeAvg = 0;
     int emptyCnt = 0;
+    int edgeCnt = 0;
     const double SCALING_LOWER = 0.85;
     const double SCALING_UPPER = 1.15;
     const int THRESHOLD = 50;
@@ -122,14 +124,34 @@ int main() {
         pq.push(Queue(p[t][0], p[t][1], 0));
 
         int tmp = engine()%rndVal.size();
+        int tmpCnt = 0;
+        emptyAvg = 0;
 
         for (int i = 0; i < MAXN; ++i) {
             for (int j = 0; j < MAXN; ++j) {
                 for (int dir = 0; dir < 4; ++dir) {
-                    if (cnt[i][j][dir] == 0) {
-                        localExpected[i][j][dir] += rndVal[tmp];
+                    if (cnt[i][j][dir] > 0) {
+                        ++tmpCnt;
+                        emptyAvg += localExpected[i][j][dir];
                     }
-                    tmp = (tmp+1) % rndVal.size();
+                    // tmp = (tmp+1) % rndVal.size();
+                }
+            }
+        }
+
+        if (tmpCnt > 0) {
+            emptyAvg /= tmpCnt;
+            if (t > 3) {
+                for (int i = 0; i < MAXN; ++i) {
+                    for (int j = 0; j < MAXN; ++j) {
+                        for (int dir = 0; dir < 4; ++dir) {
+                            if (cnt[i][j][dir] == 0) {
+                                // expected[i][j][dir] = localExpected[i][j][dir] = min(localExpected[i][j][dir], emptyAvg*5.0/6);
+                                // localExpected[i][j][dir] = min(localExpected[i][j][dir], emptyAvg*5.0/6);
+                                localExpected[i][j][dir] = emptyAvg*5.0/6;
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -153,8 +175,8 @@ int main() {
             for (int dir = 0; dir < 4; ++dir) {
                 int newr = nr + dr[dir];
                 int newc = nc + dc[dir];
-                double cost = dp[nr][nc] + expected[nr][nc][dir];
-                // double cost = dp[nr][nc] + localExpected[nr][nc][dir];
+                // double cost = dp[nr][nc] + expected[nr][nc][dir];
+                double cost = dp[nr][nc] + localExpected[nr][nc][dir];
 
                 if (newr >= 0 && newr < MAXN
                 && newc >= 0 && newc < MAXN
@@ -184,6 +206,8 @@ int main() {
         cout << ans[t] << endl;
 
         cin >> cost[t];
+        edgeCnt += ans[t].size();
+        edgeAvg += cost[t];
         costAvg = costAvg*R + cost[t]*(1.0-R);
         cost[t] *= FACTOR;
 
@@ -318,9 +342,25 @@ int main() {
             nc = nextc;
         }
         // cerr << "MAXCNT " << maxCnt << endl;
+        // cerr << t << " DEBUG EMPTY AVG " << emptyAvg << endl;
     }
 
-    // cerr << "DEBUG " << emptyAvg << endl;
+    // cerr << "DEBUG EMPTY AVG " << emptyAvg << endl;
+    // cerr << "DEBUG EDGE AVG " << edgeAvg/edgeCnt << endl;
+
+    // for (int i = 0; i < MAXN; ++i) {
+    //     for (int j = 0; j < MAXN; ++j) {
+    //         cerr << (int)cnt[i][j][0] << " ";
+    //     }
+    //     cerr << endl;
+    // }
+
+    // for (int i = 0; i < MAXN; ++i) {
+    //     for (int j = 0; j < MAXN; ++j) {
+    //         cerr << (int)cnt[i][j][2] << " ";
+    //     }
+    //     cerr << endl;
+    // }
 
     return 0;
 }
