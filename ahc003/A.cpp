@@ -31,8 +31,6 @@ using UMLL = unordered_map<long long, long long>;
 using VS = vector <string>;
 
 const int MAXN = 30;
-const int RND_MAXN = 200000;
-VI rndVal(RND_MAXN);
 
 struct Queue {
     int r;
@@ -52,25 +50,6 @@ struct Queue {
         return c < q.c;
     }
 };
-
-inline double sigmoid (double v) {
-    return 1.0 / (1.0 + exp(-v));
-}
-
-inline double probConvert(double p) {
-    // return p;
-    return sqrt(p);
-    // double diff = p-1;
-    // double prob = sigmoid(diff*2);
-
-    // if (prob > 0.8) {
-    //     return sqrt(p);
-    // } else if (prob < 0.2) {
-    //     return sqrt(p);
-    // }
-
-    // return 1.0;
-}
 
 int main() {
     const int dr[] = {1, -1, 0, 0};
@@ -98,19 +77,10 @@ int main() {
     VS ans(TIMES);
     VD cost(TIMES);
 
-    random_device seed_gen;
-    mt19937 engine(seed_gen());
-
-    for (int i = 0; i < RND_MAXN; ++i) {
-        rndVal[i] = engine()%300;
-    }
-
     double emptyAvg = 0;
     double edgeAvg = 0;
     int emptyCnt = 0;
     int edgeCnt = 0;
-    const double SCALING_LOWER = 0.85;
-    const double SCALING_UPPER = 1.15;
     const int THRESHOLD = 50;
 
     for (int t = 0; t < TIMES; ++t) {
@@ -123,7 +93,6 @@ int main() {
         dp[p[t][0]][p[t][1]] = 0;
         pq.push(Queue(p[t][0], p[t][1], 0));
 
-        int tmp = engine()%rndVal.size();
         int tmpCnt = 0;
         emptyAvg = 0;
 
@@ -134,7 +103,6 @@ int main() {
                         ++tmpCnt;
                         emptyAvg += localExpected[i][j][dir];
                     }
-                    // tmp = (tmp+1) % rndVal.size();
                 }
             }
         }
@@ -272,17 +240,11 @@ int main() {
         nr = p[t][0];
         nc = p[t][1];
         double distSum = 0;
-        double okRatio = 0;
-        int okCount = 0;
 
         for (int i = 0; i < ans[t].size(); ++i) {
             int dir = chToIdx[ans[t][i]];
 
             double scalingFactor = cnt[nr][nc][dir] == 0 ? INIT_VALUE : expected[nr][nc][dir];
-            if (cnt[nr][nc][dir] != 0) {
-                okRatio += 1.0 / ans[t].size();
-                ++okCount;
-            }
             distSum += scalingFactor;
 
             nr += dr[dir];
@@ -290,16 +252,6 @@ int main() {
         }
 
         double avg = cost[t] / distSum;
-        double costScaling = 1.0;
-        if (okRatio >= 0.3) {
-            // costScaling = max(SCALING_LOWER, min(SCALING_UPPER, probConvert(avg)));
-            avg /= costScaling;
-        }
-        // cerr << "SCALING " <<  max(SCALING_LOWER, min(SCALING_UPPER, sqrt(avg))) << " " << avg << endl;
-
-        double CR = 1+(avg-1.0)*(avg-1.0);
-        // cerr << "CR " << CR << endl;
-        // cerr << "avg ratio " << avg << endl;
         nr = p[t][0];
         nc = p[t][1];
         int maxCnt = 0;
@@ -321,7 +273,6 @@ int main() {
 
             ++cnt[nr][nc][dir];
             if (cnt[nr][nc][dir] >= THRESHOLD) {
-                plus *= costScaling; // revert
                 expected[nr][nc][dir] *= (cnt[nr][nc][dir]-1);
                 expected[nr][nc][dir] += plus;
                 expected[nr][nc][dir] /= cnt[nr][nc][dir];
