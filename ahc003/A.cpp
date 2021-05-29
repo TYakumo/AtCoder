@@ -258,7 +258,9 @@ int main() {
             for (int i = 0; i < MAXN; ++i) {
                 for (int j = 0; j < MAXN; ++j) {
                     for (int dir = 0; dir < 4; ++dir) {
-                        newExpected[i][j][dir] /= (cnt[i][j][dir]+1);
+                        double weight = cnt[i][j][dir] * max(0.0, (double)(t)/TIMES);
+                        newExpected[i][j][dir] += weight * expected[i][j][dir];
+                        newExpected[i][j][dir] /= (weight + cnt[i][j][dir]+1);
                         newExpected[i][j][dir] = max(LOWER_WEIGHT, min(UPPER_WEIGHT, newExpected[i][j][dir]));
                     }
                 }
