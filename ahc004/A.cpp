@@ -147,6 +147,7 @@ int main() {
 
     // sort(gene.begin(), gene.end(), cmp);
     sort(gene.begin(), gene.end(), cmpLen);
+    // cerr << "TOTAL GENE " << gene.size() << endl;
 
     VS ans(N);
     int idx = 0;
@@ -159,10 +160,12 @@ int main() {
             --rcnt;
         } else {
             // fill in
+            // cerr << "FAILED " << idx << " " << ans[idx].size() << " --- " << i << " " << gene[i].first.size() << endl;
             while (ans[idx].size() < N) {
                 ans[idx] += ".";
             }
             ++idx;
+            --i;
         }
 
         if (idx == N) {
@@ -170,6 +173,7 @@ int main() {
         }
     }
 
+    // cerr << "RCNT " << rcnt << " REMAIN ROW " << N-idx << endl;
     sort(gene.begin(), gene.end(), cmpLen);
 
     while (idx < N) {
@@ -184,7 +188,6 @@ int main() {
         }
     }
 
-    // cerr << "RCNT " << rcnt << endl;
     int last = N-1;
     int st = 0;
 
