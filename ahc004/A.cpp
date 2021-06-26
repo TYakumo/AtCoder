@@ -130,13 +130,17 @@ int main() {
     }
 
     sort(gene.begin(), gene.end(), cmp);
+    // sort(gene.begin(), gene.end(), cmpLen);
 
     VS ans(N);
     int idx = 0;
+    int rcnt = gene.size();
 
     for (int i = 0; i < gene.size(); ++i) {
         if (ans[idx].size() + gene[i].first.size() <= N) {
             ans[idx] += gene[i].first;
+            gene[i].second = 0;
+            --rcnt;
         } else {
             // fill in
             while (ans[idx].size() < N) {
@@ -151,6 +155,47 @@ int main() {
     }
 
     sort(gene.begin(), gene.end(), cmpLen);
+    // cerr << "RCNT " << rcnt << endl;
+    int last = N-1;
+    int st = 0;
+
+    for (int i = 0; i < gene.size(); ++i) {
+        if (gene[i].second != 0) {
+            bool ok = false;
+
+            while (last >= 0 && !ok) {
+                if (st+gene[i].first.size() > N) {
+                    --last;
+                    st = 0;
+                } else {
+                    ok = true;
+                    for (int j = 0; j < gene[i].first.size(); ++j) {
+                        if (ans[st+j][last] != '.') {
+                            ok = false;
+                            break;
+                        }
+                    }
+
+                    if (ok) {
+                        break;
+                    } else {
+                        --last;
+                        st = 0;
+                    }
+                }
+            }
+
+            cerr << "WHY " << i << " " << last << endl;
+
+            if (ok) {
+                for (int j = 0; j < gene[i].first.size(); ++j) {
+                    ans[st++][last] = gene[i].first[j];
+                }
+            } else {
+                break;
+            }
+        }
+    }
 
     for (int i = 0; i < N; ++i) {
         cout << ans[i] << endl;
