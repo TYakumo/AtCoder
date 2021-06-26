@@ -29,6 +29,11 @@ bool cmp(const pair<string, int> & a, const pair <string, int> & b) {
     // return a.first.size() < b.first.size();
 }
 
+bool cmpLen(const pair<string, int> & a, const pair <string, int> & b) {
+    // return a.second * b.first.size() < b.second * a.first.size();
+    return a.first.size() < b.first.size();
+}
+
 string comb(const string& a, const string& b) {
     int maxlen = min(a.size(), b.size());
     for (int suf = maxlen; suf > 0; --suf) {
@@ -61,6 +66,25 @@ int main() {
         cin >> gene[i].first;
         gene[i].second = 1;
     }
+    VSI tmp = gene;
+    gene.clear();
+    for (int i = 0; i < tmp.size(); ++i) {
+        bool failed = false;
+
+        for (int j = 0; j < tmp.size(); ++j) {
+            if (i != j && tmp[i].first.size() <= tmp[j].first.size()) {
+                auto iter = tmp[j].first.find(tmp[i].first);
+                if (iter != string::npos) {
+                    failed = true;
+                    break;
+                }
+            }
+        }
+
+        if (!failed) {
+            gene.push_back(tmp[i]);
+        }
+    }
 
     while (true) {
         bool changed = false;
@@ -78,6 +102,12 @@ int main() {
                 }
 
                 string res = comb(gene[i].first, gene[j].first);
+                string res2 = comb(gene[j].first, gene[i].first);
+
+                if (res2.size() < res.size()) {
+                    res = res2;
+                }
+
                 if (res.size() <= N) {
                     used[i] = used[j] = 1;
                     changed = true;
@@ -119,6 +149,8 @@ int main() {
             break;
         }
     }
+
+    sort(gene.begin(), gene.end(), cmpLen);
 
     for (int i = 0; i < N; ++i) {
         cout << ans[i] << endl;
