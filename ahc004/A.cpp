@@ -66,54 +66,70 @@ int main() {
         cin >> gene[i].first;
         gene[i].second = 1;
     }
-    VSI tmp = gene;
-    gene.clear();
-    for (int i = 0; i < tmp.size(); ++i) {
-        bool failed = false;
 
-        for (int j = 0; j < tmp.size(); ++j) {
-            if (i != j && tmp[i].first.size() <= tmp[j].first.size()) {
-                auto iter = tmp[j].first.find(tmp[i].first);
-                if (iter != string::npos) {
-                    failed = true;
-                    break;
+    sort(gene.begin(), gene.end());
+    while (true) {
+        bool changed = false;
+
+        VSI tmp = gene;
+        gene.clear();
+        for (int i = 0; i < tmp.size(); ++i) {
+            bool failed = false;
+
+            for (int j = 0; j < tmp.size(); ++j) {
+                if (i != j && tmp[i].first.size() <= tmp[j].first.size()) {
+                    auto iter = tmp[j].first.find(tmp[i].first);
+                    if (iter != string::npos) {
+                        failed = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!failed) {
+                gene.push_back(tmp[i]);
+            } else {
+                changed = true;
+            }
+        }
+
+        VI used(gene.size());
+        VSI ngene;
+        VVI cho;
+
+        for (int i = 0; i < gene.size(); i++) {
+            for (int j = i+1; j < gene.size(); ++j) {
+                string res = comb(gene[i].first, gene[j].first);
+                string res2 = comb(gene[j].first, gene[i].first);
+                int minlen = min(res.size(), res2.size());
+                if (minlen <= N) {
+                    cho.push_back({minlen - (int)(gene[i].first.size() + gene[j].first.size()), i, j});
                 }
             }
         }
 
-        if (!failed) {
-            gene.push_back(tmp[i]);
-        }
-    }
+        sort(cho.begin(), cho.end());
 
-    while (true) {
-        bool changed = false;
-        VI used(gene.size());
-        VSI ngene;
+        for (int idx = 0; idx < cho.size(); ++idx) {
+            int i = cho[idx][1];
+            int j = cho[idx][2];
 
-        for (int i = 0; i < gene.size(); i++) {
-            if (used[i]) {
+            if (used[i] || used[j]) {
                 continue;
             }
 
-            for (int j = i+1; j < gene.size(); ++j) {
-                if (used[j]) {
-                    continue;
-                }
+            string res = comb(gene[i].first, gene[j].first);
+            string res2 = comb(gene[j].first, gene[i].first);
 
-                string res = comb(gene[i].first, gene[j].first);
-                string res2 = comb(gene[j].first, gene[i].first);
+            if (res2.size() < res.size()) {
+                res = res2;
+            }
 
-                if (res2.size() < res.size()) {
-                    res = res2;
-                }
-
-                if (res.size() <= N) {
-                    used[i] = used[j] = 1;
-                    changed = true;
-                    ngene.push_back({res, gene[i].second + gene[j].second});
-                    break;
-                }
+            if (res.size() <= N) {
+                used[i] = used[j] = 1;
+                changed = true;
+                ngene.push_back({res, gene[i].second + gene[j].second});
+                break;
             }
         }
 
@@ -129,8 +145,8 @@ int main() {
         gene = ngene;
     }
 
-    sort(gene.begin(), gene.end(), cmp);
-    // sort(gene.begin(), gene.end(), cmpLen);
+    // sort(gene.begin(), gene.end(), cmp);
+    sort(gene.begin(), gene.end(), cmpLen);
 
     VS ans(N);
     int idx = 0;
@@ -155,6 +171,19 @@ int main() {
     }
 
     sort(gene.begin(), gene.end(), cmpLen);
+
+    while (idx < N) {
+        if (ans[idx].size() + gene[0].first.size() <= N) {
+            ans[idx] += gene[0].first;
+        } else {
+            // fill in
+            while (ans[idx].size() < N) {
+                ans[idx] += ".";
+            }
+            ++idx;
+        }
+    }
+
     // cerr << "RCNT " << rcnt << endl;
     int last = N-1;
     int st = 0;
@@ -185,18 +214,20 @@ int main() {
                 }
             }
 
-            cerr << "WHY " << i << " " << last << endl;
+            // cerr << "WHY " << i << " " << last << endl;
 
             if (ok) {
                 for (int j = 0; j < gene[i].first.size(); ++j) {
                     ans[st++][last] = gene[i].first[j];
                 }
+                --rcnt;
             } else {
                 break;
             }
         }
     }
 
+    // cerr << "RCNT " << rcnt << endl;
     for (int i = 0; i < N; ++i) {
         cout << ans[i] << endl;
     }
